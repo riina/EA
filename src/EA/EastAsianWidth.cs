@@ -541,18 +541,20 @@ public static class EastAsianWidth
     private static EastAsianWidthKind GetWidthKindInternal(int ch)
     {
         ReadOnlySpan<Entry> span = s_e;
-        int l = 0;
-        for (int n = span.Length; n != 0; n >>= 1)
+        int l = 0, u = span.Length - 1;
+        while (l <= u)
         {
-            int m = l + (n >> 1);
-            Entry c = span[m];
-            switch (ch - c.Value)
+            int m = l + (u - l) / 2;
+            Entry e = span[m];
+            switch (ch - e.Value)
             {
                 case 0:
-                    return c.Kind;
+                    return e.Kind;
                 case > 0:
                     l = m + 1;
-                    n--;
+                    break;
+                default:
+                    u = m - 1;
                     break;
             }
         }
