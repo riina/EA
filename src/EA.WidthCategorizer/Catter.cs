@@ -5,7 +5,7 @@ namespace EA.WidthCategorizer;
 
 public static class Catter
 {
-    private static readonly Regex s_re = new(@"([0-9A-Fa-f]+)(?:\.\.([0-9A-Fa-f]+))?;(\w+)");
+    private static readonly Regex s_re = new(@"([0-9A-Fa-f]+)(?:\.\.([0-9A-Fa-f]+))?\s*;\s*(\w+)");
 
     public static List<CRange> Categorize(Stream stream, out int initial, out int final, out int original, out int injected)
     {
