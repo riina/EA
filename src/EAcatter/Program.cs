@@ -44,8 +44,6 @@ internal static class EastAsianWidthData
     {{
         {sb}
     }};
-
-
 }}");
 
 void ArrayToContentString(byte[] array, StringBuilder b, int indent)
