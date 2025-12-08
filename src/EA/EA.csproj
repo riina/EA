@@ -17,6 +17,7 @@
 
   <PropertyGroup>
     <PackOnBuild>true</PackOnBuild>
+    <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
