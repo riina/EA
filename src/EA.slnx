@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EA.Tests/EA.Tests.csproj" />
+  <Project Path="EA.WidthCategorizer/EA.WidthCategorizer.csproj" />
+  <Project Path="EA/EA.csproj" />
+  <Project Path="EAcatter/EAcatter.csproj" />
+</Solution>

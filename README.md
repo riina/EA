@@ -14,7 +14,7 @@ Getting width category:
 Console.WriteLine($"{EastAsianWidth.GetWidthKind('音')}");
 // Width kind of code point U+1F49C
 Console.WriteLine($"{EastAsianWidth.GetWidthKind(0x1F49C)}");
-// Width of code point starting at char 0 in "💜"
+// Width kind of code point starting at char 0 in "💜"
 Console.WriteLine($"{EastAsianWidth.GetWidthKind("💜", 0)}");
 ```
 
