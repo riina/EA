@@ -27,7 +27,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>10</LangVersion>
+    <LangVersion>14</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>

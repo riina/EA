@@ -1,5 +1,7 @@
+using System;
 using System.Buffers.Binary;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using EA.WidthCategorizer;
 
@@ -27,9 +29,27 @@ public class Tests
 
     [Theory]
     [MemberData(nameof(TdGetWidthKindTestValues))]
+    public void GetWidthKind_ReadOnlySpan_Int_HasCorrectResolution(KnownEastAsianWidthKindInfo testValue)
+    {
+        byte[] bytes = s_utf32Encoding.GetBytes(testValue.CodePoint);
+        Assert.Equal(0, bytes.Length % 4);
+        int[] array = new int[bytes.Length >> 2];
+        bytes.AsSpan().CopyTo(MemoryMarshal.Cast<int, byte>((Span<int>)array));
+        if (!BitConverter.IsLittleEndian)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = BinaryPrimitives.ReverseEndianness(array[i]);
+            }
+        }
+        Assert.Equal(testValue.Kind, EastAsianWidth.GetWidthKind(array, 0));
+    }
+
+    [Theory]
+    [MemberData(nameof(TdGetWidthKindTestValues))]
     public void GetWidthKind_ReadOnlySpan_Char_HasCorrectResolution(KnownEastAsianWidthKindInfo testValue)
     {
-        Assert.Equal(testValue.Kind, EastAsianWidth.GetWidthKind((System.ReadOnlySpan<char>)testValue.CodePoint, 0));
+        Assert.Equal(testValue.Kind, EastAsianWidth.GetWidthKind((ReadOnlySpan<char>)testValue.CodePoint, 0));
     }
 
     [Theory]
@@ -48,9 +68,27 @@ public class Tests
 
     [Theory]
     [MemberData(nameof(TdGetWidthTestValues))]
+    public void GetWidth_ReadOnlySpan_Int_HasCorrectResolution(KnownEastAsianWidthLengthInfo testValue)
+    {
+        byte[] bytes = s_utf32Encoding.GetBytes(testValue.Value);
+        Assert.Equal(0, bytes.Length % 4);
+        int[] array = new int[bytes.Length >> 2];
+        bytes.AsSpan().CopyTo(MemoryMarshal.Cast<int, byte>((Span<int>)array));
+        if (!BitConverter.IsLittleEndian)
+        {
+            for (int i = 0; i < array.Length; i++)
+            {
+                array[i] = BinaryPrimitives.ReverseEndianness(array[i]);
+            }
+        }
+        Assert.Equal(testValue.Width, EastAsianWidth.GetWidth(array));
+    }
+
+    [Theory]
+    [MemberData(nameof(TdGetWidthTestValues))]
     public void GetWidth_ReadOnlySpan_Char_HasCorrectResolution(KnownEastAsianWidthLengthInfo testValue)
     {
-        Assert.Equal(testValue.Width, EastAsianWidth.GetWidth((System.ReadOnlySpan<char>)testValue.Value));
+        Assert.Equal(testValue.Width, EastAsianWidth.GetWidth((ReadOnlySpan<char>)testValue.Value));
     }
 
     [Theory]
@@ -66,7 +104,7 @@ public class Tests
     {
         byte[] expectedArray = s_utf32Encoding.GetBytes(testValue);
         MemoryStream ms = new();
-        System.Span<byte> buffer = stackalloc byte[4];
+        Span<byte> buffer = stackalloc byte[4];
         foreach (int value in Utf8Util.GetUtf32CodePointEnumerable(s_utf8Encoding.GetBytes(testValue)))
         {
             BinaryPrimitives.WriteInt32LittleEndian(buffer, value);
