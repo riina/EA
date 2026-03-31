@@ -103,34 +103,38 @@ internal ref struct Utf8ToUtf32CodePointEnumerator
 
     private static bool TryGetSingle(ReadOnlySpan<byte> span, Span<char> tmp, int startIndex, out int endIndex, out int value)
     {
-        if ((uint)startIndex >= span.Length)
+        while (true)
         {
-            endIndex = startIndex;
-            value = 0;
-            return false;
-        }
-        Utf8Util.ConvertUtf8ToUtf16(span[startIndex..], tmp, out int bytesRead, out int charsWritten);
-        switch (charsWritten)
-        {
-            case 0:
-                throw new ArgumentException($"No values available when reading from input at index {startIndex}");
-            case 1:
-                value = tmp[0];
-                endIndex = startIndex + bytesRead;
-                return true;
-            case 2:
-                {
-                    char c0 = tmp[0];
-                    if (char.IsSurrogate(c0))
+            if ((uint)startIndex >= span.Length)
+            {
+                endIndex = startIndex;
+                value = 0;
+                return false;
+            }
+            Utf8Util.ConvertUtf8ToUtf16(span[startIndex..], tmp, out int bytesRead, out int charsWritten);
+            switch (charsWritten)
+            {
+                case 0:
+                    throw new ArgumentException($"No values available when reading from input at index {startIndex}");
+                case 1:
+                    value = tmp[0];
+                    endIndex = startIndex + bytesRead;
+                    return true;
+                case 2:
                     {
-                        value = char.ConvertToUtf32(c0, tmp[1]);
-                        endIndex = startIndex + bytesRead;
-                        return true;
+                        char c0 = tmp[0];
+                        if (char.IsSurrogate(c0))
+                        {
+                            value = char.ConvertToUtf32(c0, tmp[1]);
+                            endIndex = startIndex + bytesRead;
+                            return true;
+                        }
+                        tmp = tmp[..1];
+                        continue;
                     }
-                    return TryGetSingle(span, tmp[..1], startIndex, out endIndex, out value);
-                }
-            default:
-                throw new ArgumentException($"Unexpected write of {charsWritten} chars");
+                default:
+                    throw new ArgumentException($"Unexpected write of {charsWritten} chars");
+            }
         }
     }
 
