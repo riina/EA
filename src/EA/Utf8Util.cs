@@ -10,6 +10,23 @@ internal static class Utf8Util
         return new Utf8ToUtf32CodePointEnumerable(utf8Span);
     }
 
+    public static void ConvertUtf8ToUtf16(ReadOnlySpan<byte> span, Span<char> resultBuffer, out int bytesRead, out int charsWritten)
+    {
+        var status = Utf8.ToUtf16(span, resultBuffer, out bytesRead, out charsWritten, replaceInvalidSequences: false, isFinalBlock: true);
+        switch (status)
+        {
+            case OperationStatus.Done:
+            case OperationStatus.DestinationTooSmall:
+                return;
+            case OperationStatus.NeedMoreData:
+                throw new ArgumentException("impossible");
+            case OperationStatus.InvalidData:
+                throw new ArgumentException("Encountered invalid data while processing input");
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
     public static int ConvertToUtf32(ReadOnlySpan<byte> span, int i)
     {
         if ((uint)i >= span.Length)
@@ -18,35 +35,24 @@ internal static class Utf8Util
         }
         span = span[i..];
         Span<char> tmp = stackalloc char[2];
-        var status = Utf8.ToUtf16(span[i..], tmp, out int _, out int charsWritten, replaceInvalidSequences: false, isFinalBlock: true);
-        switch (status)
+        ConvertUtf8ToUtf16(span[i..], tmp, out int _, out int charsWritten);
+        switch (charsWritten)
         {
-            case OperationStatus.Done:
-            case OperationStatus.DestinationTooSmall:
-                switch (charsWritten)
+            case 0:
+                throw new ArgumentException($"No values available when reading from input at index {i}");
+            case 1:
+                return tmp[0];
+            case 2:
                 {
-                    case 0:
-                        throw new ArgumentException($"No values available when reading from input at index {i}");
-                    case 1:
-                        return tmp[0];
-                    case 2:
-                        {
-                            char c0 = tmp[0];
-                            if (char.IsSurrogate(c0))
-                            {
-                                return char.ConvertToUtf32(c0, tmp[1]);
-                            }
-                            return tmp[0];
-                        }
-                    default:
-                        throw new ArgumentException($"Unexpected write of {charsWritten} chars");
+                    char c0 = tmp[0];
+                    if (char.IsSurrogate(c0))
+                    {
+                        return char.ConvertToUtf32(c0, tmp[1]);
+                    }
+                    return tmp[0];
                 }
-            case OperationStatus.NeedMoreData:
-                throw new ArgumentException("impossible");
-            case OperationStatus.InvalidData:
-                throw new ArgumentException("Encountered invalid data while processing input");
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentException($"Unexpected write of {charsWritten} chars");
         }
     }
 }
@@ -103,39 +109,28 @@ internal ref struct Utf8ToUtf32CodePointEnumerator
             value = 0;
             return false;
         }
-        var status = Utf8.ToUtf16(span[startIndex..], tmp, out int bytesRead, out int charsWritten, replaceInvalidSequences: false, isFinalBlock: true);
-        switch (status)
+        Utf8Util.ConvertUtf8ToUtf16(span[startIndex..], tmp, out int bytesRead, out int charsWritten);
+        switch (charsWritten)
         {
-            case OperationStatus.Done:
-            case OperationStatus.DestinationTooSmall:
-                switch (charsWritten)
+            case 0:
+                throw new ArgumentException($"No values available when reading from input at index {startIndex}");
+            case 1:
+                value = tmp[0];
+                endIndex = startIndex + bytesRead;
+                return true;
+            case 2:
                 {
-                    case 0:
-                        throw new ArgumentException($"No values available when reading from input at index {startIndex}");
-                    case 1:
-                        value = tmp[0];
+                    char c0 = tmp[0];
+                    if (char.IsSurrogate(c0))
+                    {
+                        value = char.ConvertToUtf32(c0, tmp[1]);
                         endIndex = startIndex + bytesRead;
                         return true;
-                    case 2:
-                        {
-                            char c0 = tmp[0];
-                            if (char.IsSurrogate(c0))
-                            {
-                                value = char.ConvertToUtf32(c0, tmp[1]);
-                                endIndex = startIndex + bytesRead;
-                                return true;
-                            }
-                            return TryGetSingle(span, stackalloc char[1], startIndex, out endIndex, out value);
-                        }
-                    default:
-                        throw new ArgumentException($"Unexpected write of {charsWritten} chars");
+                    }
+                    return TryGetSingle(span, tmp[..1], startIndex, out endIndex, out value);
                 }
-            case OperationStatus.NeedMoreData:
-                throw new ArgumentException("impossible");
-            case OperationStatus.InvalidData:
-                throw new ArgumentException("Encountered invalid data while processing input");
             default:
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentException($"Unexpected write of {charsWritten} chars");
         }
     }
 
