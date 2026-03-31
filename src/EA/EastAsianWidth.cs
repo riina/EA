@@ -24,6 +24,7 @@ public static partial class EastAsianWidth
     static EastAsianWidth()
     {
         ReadOnlySpan<byte> span = EastAsianWidthData.s_data;
+        System.Diagnostics.Debug.Assert(span.Length % 3 == 0);
         int cc = span.Length / 3;
         s_e = new Entry[cc];
         for (int i = 0; i < cc; i++)
