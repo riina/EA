@@ -62,6 +62,10 @@ partial class EastAsianWidth
         return sum;
     }
 
+    #endregion
+
+    #region GetWidthOfCodePoint
+
     /// <summary>
     /// Gets the width of the Unicode code point at the specified offset in a UTF-8 encoded <see cref="ReadOnlySpan{T}"/> of <see cref="byte"/>.
     /// </summary>
