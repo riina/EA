@@ -7,15 +7,8 @@ internal static class Utf8Util
         return new Utf8ToUtf32CodePointEnumerable(utf8Span);
     }
 
-#if !NETCOREAPP
-    private static readonly System.Text.UTF8Encoding s_utf8Encoding = new(encoderShouldEmitUTF8Identifier: false);
-    private static System.Text.Decoder Utf8Decoder => s_utf8Decoder ??= s_utf8Encoding.GetDecoder();
-    [ThreadStatic] private static System.Text.Decoder? s_utf8Decoder;
-#endif
-
     public static void ConvertUtf8ToUtf16(ReadOnlySpan<byte> span, Span<char> resultBuffer, out int bytesRead, out int charsWritten)
     {
-#if NETCOREAPP
         var status = System.Text.Unicode.Utf8.ToUtf16(span, resultBuffer, out bytesRead, out charsWritten, replaceInvalidSequences: false, isFinalBlock: true);
         switch (status)
         {
@@ -29,11 +22,6 @@ internal static class Utf8Util
             default:
                 throw new ArgumentOutOfRangeException();
         }
-#else
-        var decoder = Utf8Decoder;
-        decoder.Reset();
-        decoder.Convert(span, resultBuffer, true, out bytesRead, out charsWritten, out _);
-#endif
     }
 
     public static int ConvertToUtf32(ReadOnlySpan<byte> span, int i)
